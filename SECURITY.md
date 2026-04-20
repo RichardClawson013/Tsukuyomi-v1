@@ -4,7 +4,7 @@
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Email: `security@tsukuyomi.dev` (or the author directly: `rob@tsukuyomi.dev`).
+Email: `umakemedo@proton.me` 
 
 Include:
 - A description of the vulnerability.
