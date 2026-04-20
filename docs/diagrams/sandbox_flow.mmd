@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant Tsukuyomi
+    participant WT as Worktree
+    participant Plan as Plan executor
+    participant Eyes
+
+    Tsukuyomi->>WT: git worktree add /tmp/tsuku-sandbox-xyz
+    Tsukuyomi->>Plan: execute plan inside worktree
+    Note over Plan: ulimit, unshare, HTTP_PROXY=blackhole
+    Plan-->>WT: file changes
+    Tsukuyomi->>WT: git diff --name-only
+    WT-->>Tsukuyomi: actual_files
+    Tsukuyomi->>Tsukuyomi: match_score = |actual ∩ expected| / |expected|
+    alt match_score >= 0.90
+        Tsukuyomi->>Eyes: PASS — proceed to real execution
+    else match_score < 0.90
+        Tsukuyomi->>Tsukuyomi: REJECT plan; report divergence
+    end
+    Tsukuyomi->>WT: git worktree remove (cleanup)

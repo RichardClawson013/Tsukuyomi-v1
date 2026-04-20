@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "version_label": "1.0.0",
+
+  "interceptor": {
+    "host": "127.0.0.1",
+    "port": 9999,
+    "credential_passthrough": false,
+    "require_client_token": false,
+    "client_tokens_env_var": "TSUKUYOMI_CLIENT_TOKENS",
+    "stream_pass_through": true,
+    "max_inbound_size_bytes": 10485760,
+    "request_timeout_seconds": 600
+  },
+
+  "upstream": {
+    "default": "anthropic",
+    "routing": {
+      "claude-*": "anthropic",
+      "gpt-*": "openai",
+      "llama-*": "openrouter",
+      "qwen-*": "openrouter",
+      "nousresearch/*": "openrouter"
+    },
+    "anthropic": {
+      "base_url": "https://api.anthropic.com",
+      "api_key_env_var": "ANTHROPIC_API_KEY",
+      "default_model": "claude-sonnet-4.5",
+      "timeout_seconds": 300
+    },
+    "openai": {
+      "base_url": "https://api.openai.com/v1",
+      "api_key_env_var": "OPENAI_API_KEY",
+      "default_model": "gpt-5.2"
+    },
+    "openrouter": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key_env_var": "OPENROUTER_API_KEY"
+    },
+    "ollama_local": {
+      "base_url": "http://localhost:11434",
+      "api_key_env_var": null
+    }
+  },
+
+  "organs": {
+    "skin": {
+      "enabled": true,
+      "rules_file": "config/skin_rules.json",
+      "classifier_threshold_tier2": 0.35,
+      "classifier_threshold_tier3": 0.65,
+      "default_tier": 2
+    },
+    "ears": {
+      "enabled": true,
+      "activate_on_tiers": [2, 3],
+      "checks": {
+        "pronoun_resolution": true,
+        "path_disambiguation": true,
+        "verb_object_fit": true,
+        "scope_indicators": true
+      }
+    },
+    "shoulders": {
+      "enabled": true,
+      "mcp_command": ["npx", "-y", "gitnexus@latest", "mcp"],
+      "mcp_startup_timeout_seconds": 20,
+      "cache_tools_list": true,
+      "thresholds": {
+        "low_max_callers": 0,
+        "medium_max_callers": 5,
+        "high_max_callers": 15
+      },
+      "unknown_treated_as": "HIGH"
+    },
+    "knee": {
+      "enabled": true,
+      "blocked_patterns_reference": "config/knee_patterns.json",
+      "case_insensitive": true,
+      "emergency_override_requires": "human_signature"
+    },
+    "toe": {
+      "enabled": true,
+      "daily_budget_usd": 2.00,
+      "warning_threshold_usd": 1.50,
+      "state_file": "data/budget_state.json",
+      "pricing_file": "config/model_pricing.json",
+      "downgrade_map": {
+        "claude-opus-4.7": "claude-sonnet-4.5",
+        "claude-sonnet-4.5": "claude-haiku-4.6",
+        "gpt-5.2": "gpt-5.2-mini"
+      },
+      "reset_on": "midnight_utc"
+    },
+    "eyes": {
+      "enabled": true,
+      "verify_git_diff": true,
+      "verify_content_hash_for_non_git": true,
+      "warn_on_mismatch": true,
+      "block_on_repeated_mismatch": true,
+      "mismatch_threshold_per_session": 3
+    },
+    "nose": {
+      "enabled": true,
+      "window_seconds": 60,
+      "max_identical_commands": 3,
+      "max_token_rate_per_min": 500,
+      "max_tool_calls_per_min": 20,
+      "max_errors_per_2min": 5,
+      "max_file_changes_per_min_tier12": 10,
+      "budget_depletion_alert_fraction_per_hour": 0.5
+    },
+    "mouth": {
+      "enabled": true,
+      "interface": "cli",
+      "timeout_seconds": 120,
+      "default_on_timeout": "deny",
+      "webhook_url": null,
+      "webhook_secret_env_var": "TSUKUYOMI_MOUTH_WEBHOOK_SECRET",
+      "approval_triggers": {
+        "blast_risk": ["HIGH", "CRITICAL"],
+        "budget_percent": 80,
+        "gary_escalation": true,
+        "sandbox_mismatch": true,
+        "eyes_mismatch_repeated": true
+      }
+    }
+  },
+
+  "protocols": {
+    "gary": {
+      "enabled": true,
+      "activate_on_tier": [3],
+      "activate_on_risk": ["HIGH", "CRITICAL"],
+      "activate_on_irreversible_keywords": [
+        "drop table", "force push", "reset --hard", "rm -rf", "truncate"
+      ],
+      "activate_on_multi_step_plan": true,
+      "multi_step_threshold": 2,
+      "min_answer_lengths": { "Q1": 150, "Q2": 60, "Q3": 100, "Q4": 100, "Q5": 50 },
+      "min_risk_keywords_total": 4,
+      "evasion_phrases_file": "config/gary_evasion_phrases.json",
+      "risk_keywords_file": "config/gary_risk_keywords.json",
+      "max_rounds": 2,
+      "escalate_to_mouth_on_final_fail": true,
+      "audit_log_dir": "data/audits",
+      "max_cost_per_audit_usd": 0.10,
+      "primary_audit_endpoint": "same_as_request",
+      "fallback_audit_endpoint": "openrouter/anthropic/claude-haiku-4.6"
+    },
+    "nightshift": {
+      "enabled": true,
+      "lookback_hours": 24,
+      "min_block_count_for_proposal": 3,
+      "proposals_dir": "data/proposals",
+      "heuristics_enabled": [
+        "frequently_blocked_commands",
+        "audit_evasion_patterns",
+        "skin_classification_drift",
+        "budget_calibration",
+        "nose_threshold_calibration",
+        "untriggered_sandbox_mismatches",
+        "gitnexus_staleness"
+      ],
+      "auto_apply": false,
+      "proposal_retention_days": 180
+    }
+  },
+
+  "memory": {
+    "backend": "sqlite_fts5",
+    "sqlite_path": "data/memory.db",
+    "wal_mode": true,
+    "retention_days_events": 365,
+    "retention_days_audits": 365,
+    "retention_days_proposals_rejected": 180,
+    "retain_message_bodies": false,
+    "retain_tool_call_args": false,
+    "encrypt_bodies_at_rest": true
+  },
+
+  "observability": {
+    "log_level": "info",
+    "log_dir": "data/logs",
+    "log_rotation": "daily",
+    "log_retention_days": 365,
+    "metrics_enabled": false,
+    "metrics_port": 9100,
+    "metrics_path": "/metrics",
+    "tracing_enabled": false,
+    "tracing_sampling": { "tier_1": 0.01, "tier_2": 0.1, "tier_3": 1.0 }
+  }
+}

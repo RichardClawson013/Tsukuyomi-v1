@@ -1,0 +1,10 @@
+{
+  "description": "Additional destructive-command patterns beyond the compiled-in defaults.",
+  "patterns": [
+    {"id": "aws_s3_rb_force",          "regex": "\\baws\\s+s3\\s+rb\\s+.*--force"},
+    {"id": "kubectl_delete_all",       "regex": "\\bkubectl\\s+delete\\s+.*--all\\b"},
+    {"id": "terraform_destroy_auto",   "regex": "\\bterraform\\s+destroy\\s+.*-auto-approve\\b"},
+    {"id": "docker_system_prune_all",  "regex": "\\bdocker\\s+system\\s+prune\\s+.*-a"},
+    {"id": "npm_unpublish",            "regex": "\\bnpm\\s+unpublish\\s+"}
+  ]
+}

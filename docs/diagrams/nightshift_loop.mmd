@@ -1,0 +1,12 @@
+flowchart LR
+    Live[Live Tsukuyomi] -->|appends to| Mem[(Anatomic memory)]
+    Cron(Cron 03:00) --> NS[NightShift batch]
+    Mem --> NS
+    NS --> Heur[Heuristics:
+    block freq, evasion, drift,
+    budget calib, nose calib]
+    Heur --> Prop[/Proposals .md/]
+    Prop --> Human{Human reviewer}
+    Human -->|merge| Cfg[corelaw.json]
+    Human -->|reject| Log[NightShift dataset]
+    Cfg -.->|reload SIGHUP| Live

@@ -1,0 +1,4 @@
+{
+  "extends": "../corelaw.json",
+  "_note": "Profile for Claude Code deployments. Minimal overrides."
+}

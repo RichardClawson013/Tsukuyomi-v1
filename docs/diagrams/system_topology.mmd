@@ -1,0 +1,18 @@
+flowchart LR
+    Agent[("Agent
+    (Claude Code, Hermes,
+     Cursor, custom)")]
+    Tsukuyomi[["Tsukuyomi
+    Reverse-Proxy Interceptor
+    localhost:9999"]]
+    Provider[("LLM Provider
+    (Anthropic, OpenAI,
+     OpenRouter, Ollama)")]
+
+    Agent -- "HTTP request
+    (OpenAI/Anthropic format)" --> Tsukuyomi
+    Tsukuyomi -- "Forward iff all
+    safety checks pass" --> Provider
+    Provider -- "Streaming response" --> Tsukuyomi
+    Tsukuyomi -- "Streaming response
+    (tool calls inspected)" --> Agent

@@ -1,0 +1,1 @@
+"""Protocol Gary and NightShift."""

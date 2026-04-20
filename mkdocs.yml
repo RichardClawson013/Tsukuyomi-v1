@@ -1,0 +1,52 @@
+site_name: Tsukuyomi
+site_description: Deterministic interceptor architecture for LLM agent safety.
+site_url: https://robdevet.github.io/tsukuyomi
+repo_url: https://github.com/robdevet/tsukuyomi
+repo_name: robdevet/tsukuyomi
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - toc.follow
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: purple
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - pymdownx.details
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Research:
+      - Paper: research/PAPER.md
+      - Related work: research/related_work.md
+  - Architecture:
+      - Overview: architecture/01_overview.md
+      - Interceptor: architecture/02_interceptor.md
+      - Organs: architecture/03_organs.md
+      - Protocols: architecture/04_protocols.md
+      - Memory: architecture/05_memory.md
+      - Observability: architecture/06_observability.md
+  - Guides:
+      - Installation: guides/installation.md
+      - Claude Code: guides/integrating_claude_code.md
+      - Hermes: guides/integrating_hermes.md
+      - Cursor: guides/integrating_cursor.md
+      - Custom: guides/integrating_custom.md
+      - Configuration: guides/configuration.md
+      - Operations: guides/operations.md
+      - Troubleshooting: guides/troubleshooting.md
+  - Architecture Decisions: adr/

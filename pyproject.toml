@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tsukuyomi"
+version = "1.0.0"
+description = "Deterministic interceptor architecture that forces safety into any LLM agent."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Rob de Vet", email = "rob@tsukuyomi.dev" }]
+keywords = ["llm", "agents", "safety", "guardrails", "interceptor", "agentic-ai"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Security",
+]
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.34",
+  "httpx>=0.28",
+  "pydantic>=2.11",
+  "structlog>=25.1",
+  "aiosqlite>=0.21",
+  "rich>=13.9",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=6.0",
+  "mypy>=1.14",
+  "ruff>=0.9",
+  "types-PyYAML",
+]
+metrics = [
+  "prometheus-client>=0.21",
+]
+tracing = [
+  "opentelemetry-sdk>=1.30",
+  "opentelemetry-exporter-otlp>=1.30",
+]
+
+[project.scripts]
+tsukuyomi = "tsukuyomi.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/robdevet/tsukuyomi"
+Documentation = "https://github.com/robdevet/tsukuyomi/tree/main/docs"
+Repository = "https://github.com/robdevet/tsukuyomi"
+Issues = "https://github.com/robdevet/tsukuyomi/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+tsukuyomi = ["memory/schema.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+addopts = "-ra --strict-markers --strict-config"
+
+[tool.coverage.run]
+source = ["src/tsukuyomi"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "UP", "RUF"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+files = ["src/tsukuyomi"]

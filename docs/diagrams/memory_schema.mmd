@@ -1,0 +1,60 @@
+erDiagram
+    requests ||--o{ events : has
+    requests ||--o{ audits : triggers
+    requests ||--o{ sandbox_runs : triggers
+    audits ||--o{ events : emits
+    proposals }|--o{ events : references
+
+    requests {
+        text request_id PK
+        text ts_start_utc
+        text ts_end_utc
+        text inbound_format
+        text agent_hint
+        text model_requested
+        text model_used
+        text upstream
+        int  tier
+        int  tokens_in
+        int  tokens_out
+        real cost_usd
+        int  latency_ms
+        text final_decision
+    }
+    events {
+        text event_id PK
+        text ts_utc
+        text request_id FK
+        text organ
+        text severity
+        text decision
+        text reason
+        text metadata_json
+    }
+    audits {
+        text audit_id PK
+        text request_id FK
+        text ts_utc
+        text action_summary
+        text triggering_organ
+        text rounds_json
+        text final_decision
+        real audit_cost_usd
+    }
+    sandbox_runs {
+        text sandbox_id PK
+        text request_id FK
+        text ts_start_utc
+        text plan_json
+        text expected_files_json
+        text actual_files_json
+        real match_score
+        int  passed
+    }
+    proposals {
+        text proposal_id PK
+        text ts_generated_utc
+        text heuristic
+        text status
+        text path
+    }

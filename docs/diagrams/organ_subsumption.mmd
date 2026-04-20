@@ -1,0 +1,29 @@
+flowchart TD
+    subgraph Deliberation
+        H1[Skin: tier classify]
+        H2[Ears: ambiguity]
+        H3[Shoulders: blast radius]
+        H4[Gary: forced audit]
+        H5[Sandbox: simulate]
+    end
+    subgraph Reflexes
+        L1[Knee: destructive pattern]
+        L2[Toe: resource ceiling]
+    end
+    subgraph Senses
+        S1[Eyes: post-action verify]
+        S2[Nose: anomaly window]
+    end
+    subgraph Bridge
+        B1[Mouth: human-in-loop]
+    end
+
+    H1 --> H2 --> H3 --> H4 --> H5
+    H5 --> L1
+    L1 --> L2
+    L1 -.->|veto| Bridge
+    L2 -.->|veto| Bridge
+    S1 -.->|signal| S2
+    S2 -.->|escalate| B1
+    H3 -.->|CRITICAL| B1
+    H4 -.->|round-2 fail| B1

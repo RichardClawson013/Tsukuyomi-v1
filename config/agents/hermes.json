@@ -1,0 +1,13 @@
+{
+  "extends": "../corelaw.json",
+  "organs": {
+    "skin": {
+      "classifier_threshold_tier3": 0.55
+    }
+  },
+  "protocols": {
+    "gary": {
+      "fallback_audit_endpoint": "openrouter/anthropic/claude-haiku-4.6"
+    }
+  }
+}

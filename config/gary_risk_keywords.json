@@ -1,0 +1,12 @@
+{
+  "items": [
+    "break", "broken", "corrupt", "lose", "lost", "delete", "deleted",
+    "destroy", "destruction", "irreversible", "permanent", "unrecoverable",
+    "conflict", "race", "deadlock", "leak", "leakage", "expose", "exposure",
+    "bypass", "crash", "hang", "escalate", "escalation", "privilege",
+    "inject", "injection", "spoof", "spoofing", "stale", "staleness",
+    "inconsistent", "orphan", "fail", "failure", "failed", "error",
+    "exception", "undefined", "null", "nil", "starvation", "overflow",
+    "underflow", "rollback", "restore", "revert"
+  ]
+}

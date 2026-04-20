@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+title: "Anatomic AI in Infinite Tsukuyomi"
+message: "If you use this software, please cite it as below."
+type: software
+version: "1.0.0"
+date-released: "2026-04-20"
+license: Apache-2.0
+repository-code: "https://github.com/robdevet/tsukuyomi"
+authors:
+  - family-names: "de Vet"
+    given-names: "Rob"
+    email: "rob@tsukuyomi.dev"
+abstract: >
+  A deterministic interceptor architecture that forces safety into any
+  LLM agent by operating as a reverse proxy at the HTTP boundary between
+  agent and model provider. Integrates subsumption architecture, dual-
+  process theory, cybernetics, and embodied world models into a single
+  coercive — rather than cooperative — safety layer.
+keywords:
+  - "LLM agents"
+  - "AI safety"
+  - "guardrails"
+  - "interceptor architecture"
+  - "agentic AI"
+  - "agent safety"
+  - "sandbox simulation"
+references:
+  - type: article
+    authors:
+      - family-names: Brooks
+        given-names: Rodney A.
+    title: "A Robust Layered Control System for a Mobile Robot"
+    journal: "IEEE Journal of Robotics and Automation"
+    year: 1986
+preferred-citation:
+  type: software
+  title: "Anatomic AI in Infinite Tsukuyomi"
+  authors:
+    - family-names: "de Vet"
+      given-names: "Rob"
+  version: "1.0.0"
+  year: 2026

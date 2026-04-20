@@ -1,0 +1,22 @@
+sequenceDiagram
+    autonumber
+    participant Agent
+    participant Tsukuyomi
+    participant AuditLLM
+    participant Mouth as Human (Mouth)
+
+    Agent->>Tsukuyomi: Plan: rename `process_order` (HIGH blast)
+    Tsukuyomi->>AuditLLM: 5 questions about plan
+    AuditLLM-->>Tsukuyomi: Round 1 answers
+    Tsukuyomi->>Tsukuyomi: Validate (length, evasion, vocab)
+    Note over Tsukuyomi: Round 1 FAIL: Q3 too short, evasion phrase present
+    Tsukuyomi->>AuditLLM: Round 2 with feedback
+    AuditLLM-->>Tsukuyomi: Round 2 answers
+    Tsukuyomi->>Tsukuyomi: Validate
+    alt Round 2 PASS
+        Tsukuyomi->>Agent: Plan permitted (proceed to sandbox)
+    else Round 2 FAIL
+        Tsukuyomi->>Mouth: Escalation with full audit trail
+        Mouth-->>Tsukuyomi: approve | deny | abort_all
+        Tsukuyomi->>Agent: Decision applied
+    end

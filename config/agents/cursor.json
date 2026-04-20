@@ -1,0 +1,10 @@
+{
+  "extends": "../corelaw.json",
+  "organs": {
+    "shoulders": {
+      "thresholds": {
+        "high_max_callers": 10
+      }
+    }
+  }
+}

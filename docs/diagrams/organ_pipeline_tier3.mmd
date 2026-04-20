@@ -1,0 +1,35 @@
+flowchart TB
+    Start([Agent HTTP request arrives])
+    Skin{Skin: classify tier}
+    Ears{Ears: ambiguous?}
+    Shoulders[Shoulders: blast radius]
+    Gary{Protocol Gary: audit}
+    Sandbox[Tsukuyomi sandbox: simulate]
+    Knee{Knee: destructive?}
+    Toe{Toe: budget?}
+    Forward([Forward to upstream])
+    Eyes[Eyes: verify diff]
+    Nose[Nose: anomaly window]
+    Mem[(Memory: persist)]
+    Mouth([Mouth: human])
+
+    Start --> Skin
+    Skin -->|Tier 3| Ears
+    Skin -->|Tier 1| Knee
+    Ears -->|clear| Shoulders
+    Ears -->|ambiguous| Mouth
+    Shoulders -->|HIGH/CRITICAL| Gary
+    Shoulders -->|MEDIUM| Knee
+    Gary -->|round 1 fail| Gary
+    Gary -->|round 2 pass| Sandbox
+    Gary -->|round 2 fail| Mouth
+    Sandbox -->|score >= 0.90| Knee
+    Sandbox -->|score < 0.90| Mouth
+    Knee -->|permit| Toe
+    Knee -->|block| Mem
+    Toe -->|GREEN| Forward
+    Toe -->|AMBER| Forward
+    Toe -->|RED| Mouth
+    Forward --> Eyes
+    Eyes --> Nose
+    Nose --> Mem
