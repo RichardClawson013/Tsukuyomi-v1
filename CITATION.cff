@@ -5,11 +5,11 @@ type: software
 version: "1.0.0"
 date-released: "2026-04-20"
 license: Apache-2.0
-repository-code: "https://github.com/robdevet/tsukuyomi"
+repository-code: "https://github.com/RichardClawson013/Tsukuyomi/"
 authors:
   - family-names: "de Vet"
     given-names: "Rob"
-    email: "rob@tsukuyomi.dev"
+    email: "umakemedo@proton.me"
 abstract: >
   A deterministic interceptor architecture that forces safety into any
   LLM agent by operating as a reverse proxy at the HTTP boundary between
