@@ -3,14 +3,17 @@
 Spec: docs/architecture/04_protocols.md §5.1 and ADR 0004.
 """
 from __future__ import annotations
+from dataclasses import dataclass
 import json
+import os
 import re
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
+import httpx
 from tsukuyomi.core.types import CanonicalRequest, GaryVerdict
 from tsukuyomi.observability.logging import get_logger
 
@@ -46,8 +49,175 @@ DEFAULT_RISK_KEYWORDS = [
 ]
 
 
+class AuditExecutor(Protocol):
+    async def ask(
+        self,
+        *,
+        req: CanonicalRequest,
+        action: str,
+        feedback: list[str] | None,
+        questions: list[str],
+    ) -> tuple[dict[str, str], float]:
+        """Return (answers, estimated_usd_cost)."""
+
+
+class StubAuditExecutor:
+    async def ask(
+        self,
+        *,
+        req: CanonicalRequest,
+        action: str,
+        feedback: list[str] | None,
+        questions: list[str],
+    ) -> tuple[dict[str, str], float]:
+        del req, action, feedback, questions
+        # Deterministic safe default: forces validation failure and escalation.
+        return {q: "" for q in ("Q1", "Q2", "Q3", "Q4", "Q5")}, 0.0
+
+
+@dataclass
+class _AuditEndpoint:
+    base_url: str
+    model: str
+    api_key_env_var: str | None
+    timeout_seconds: int
+    max_retries: int
+    temperature: float
+    input_per_million_usd: float
+    output_per_million_usd: float
+
+
+class HttpAuditExecutor:
+    def __init__(self, primary: _AuditEndpoint, fallback: _AuditEndpoint | None = None) -> None:
+        self.primary = primary
+        self.fallback = fallback
+
+    async def ask(
+        self,
+        *,
+        req: CanonicalRequest,
+        action: str,
+        feedback: list[str] | None,
+        questions: list[str],
+    ) -> tuple[dict[str, str], float]:
+        del req
+        prompt = self._build_prompt(action=action, feedback=feedback, questions=questions)
+        try:
+            return await self._ask_endpoint(self.primary, prompt)
+        except Exception as primary_exc:
+            if self.fallback is None:
+                raise primary_exc
+            log.warning("gary.audit_primary_failed", error=str(primary_exc))
+            return await self._ask_endpoint(self.fallback, prompt)
+
+    async def _ask_endpoint(self, endpoint: _AuditEndpoint, prompt: str) -> tuple[dict[str, str], float]:
+        url = f"{endpoint.base_url.rstrip('/')}/chat/completions"
+        headers = {"content-type": "application/json"}
+        if endpoint.api_key_env_var:
+            key = os.environ.get(endpoint.api_key_env_var)
+            if not key:
+                raise RuntimeError(f"Missing env var: {endpoint.api_key_env_var}")
+            headers["authorization"] = f"Bearer {key}"
+
+        body = {
+            "model": endpoint.model,
+            "temperature": endpoint.temperature,
+            "messages": [
+                {"role": "system", "content": (
+                    "You are Protocol Gary's audit model. "
+                    "Return ONLY valid JSON object with string fields Q1..Q5."
+                )},
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"},
+        }
+
+        last_exc: Exception | None = None
+        for attempt in range(endpoint.max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=float(endpoint.timeout_seconds)) as client:
+                    resp = await client.post(url, headers=headers, json=body)
+                resp.raise_for_status()
+                payload = resp.json()
+                answers = self._parse_answers(payload)
+                return answers, self._estimate_cost(payload, endpoint)
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                if attempt < endpoint.max_retries:
+                    continue
+        if last_exc is None:
+            raise RuntimeError("Unexpected audit executor failure")
+        raise last_exc
+
+    @staticmethod
+    def _build_prompt(action: str, feedback: list[str] | None, questions: list[str]) -> str:
+        feedback_text = "\n".join(f"- {r}" for r in (feedback or []))
+        return (
+            "Action summary:\n"
+            f"{action}\n\n"
+            "Questions (answer all, each as Q1..Q5):\n"
+            f"Q1: {questions[0]}\n"
+            f"Q2: {questions[1]}\n"
+            f"Q3: {questions[2]}\n"
+            f"Q4: {questions[3]}\n"
+            f"Q5: {questions[4]}\n\n"
+            "If prior round failed, address these validation issues explicitly:\n"
+            f"{feedback_text or '- none'}\n\n"
+            "Return JSON exactly like: "
+            "{\"Q1\":\"...\",\"Q2\":\"...\",\"Q3\":\"...\",\"Q4\":\"...\",\"Q5\":\"...\"}"
+        )
+
+    @staticmethod
+    def _parse_answers(payload: dict[str, Any]) -> dict[str, str]:
+        choices = payload.get("choices") or []
+        if not choices:
+            raise ValueError("Audit response missing choices")
+        message = choices[0].get("message") or {}
+        content = message.get("content", "")
+        if isinstance(content, list):
+            content = "\n".join(
+                p.get("text", "") if isinstance(p, dict) else str(p)
+                for p in content
+            )
+        data = HttpAuditExecutor._parse_json_object(str(content))
+        return {
+            "Q1": str(data.get("Q1", "")),
+            "Q2": str(data.get("Q2", "")),
+            "Q3": str(data.get("Q3", "")),
+            "Q4": str(data.get("Q4", "")),
+            "Q5": str(data.get("Q5", "")),
+        }
+
+    @staticmethod
+    def _parse_json_object(raw: str) -> dict[str, Any]:
+        try:
+            data = json.loads(raw)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            pass
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if not match:
+            raise ValueError("Audit response did not contain JSON object")
+        parsed = json.loads(match.group(0))
+        if not isinstance(parsed, dict):
+            raise ValueError("Audit response JSON is not an object")
+        return parsed
+
+    @staticmethod
+    def _estimate_cost(payload: dict[str, Any], endpoint: _AuditEndpoint) -> float:
+        usage = payload.get("usage") or {}
+        prompt_toks = int(usage.get("prompt_tokens") or 0)
+        completion_toks = int(usage.get("completion_tokens") or 0)
+        cost = (
+            (prompt_toks / 1_000_000) * float(endpoint.input_per_million_usd)
+            + (completion_toks / 1_000_000) * float(endpoint.output_per_million_usd)
+        )
+        return float(cost)
+
+
 class ProtocolGary:
-    def __init__(self, config: Any) -> None:
+    def __init__(self, config: Any, audit_executor: AuditExecutor | None = None) -> None:
         self.config = config
         self.evasion = self._load_list(getattr(config, "evasion_phrases_file", ""),
                                         DEFAULT_EVASION_PHRASES)
@@ -55,14 +225,10 @@ class ProtocolGary:
                                             DEFAULT_RISK_KEYWORDS))
         self.log_dir = Path(getattr(config, "audit_log_dir", "data/audits")).expanduser()
         self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.audit_executor: AuditExecutor = audit_executor or self._build_executor()
 
     async def audit(self, req: CanonicalRequest) -> GaryVerdict:
-        """Run 1 or 2 rounds of structured audit; return a verdict.
-
-        For v1.0 the audit LLM call is abstracted through an `audit_executor`
-        which defaults to an echo-stub for local-test; real deployments wire
-        this to the configured upstream (Anthropic Haiku by default).
-        """
+        """Run 1..N rounds of structured audit; return a verdict."""
         audit_id = f"aud_{uuid.uuid4().hex[:10]}"
         started = time.time()
         rounds: list[dict[str, Any]] = []
@@ -70,12 +236,25 @@ class ProtocolGary:
         feedback = None
         passed = False
         total_cost = 0.0
+        max_cost = float(getattr(self.config, "max_cost_per_audit_usd", 0.10))
 
         max_rounds = int(getattr(self.config, "max_rounds", 2))
         for r in range(1, max_rounds + 1):
-            answers, cost = await self._ask_audit_llm(req, action_summary, feedback=feedback)
+            answers, cost, executor_error = await self._ask_audit_llm(
+                req,
+                action_summary,
+                feedback=feedback,
+            )
             total_cost += cost
             validation = self._validate(answers)
+            if executor_error:
+                validation["reasons"].append(f"audit_executor_error:{executor_error}")
+            cost_cap_hit = total_cost > max_cost
+            if cost_cap_hit:
+                validation["reasons"].append(
+                    f"cost_cap_exceeded({total_cost:.5f}>{max_cost:.5f})",
+                )
+                validation["approved"] = False
             rounds.append({
                 "round": r,
                 "questions": FIVE_QUESTIONS,
@@ -85,6 +264,8 @@ class ProtocolGary:
             })
             if validation["approved"]:
                 passed = True
+                break
+            if cost_cap_hit:
                 break
             feedback = validation["reasons"]
 
@@ -139,16 +320,56 @@ class ProtocolGary:
     # ----- audit LLM executor (stub) -----
 
     async def _ask_audit_llm(self, req: CanonicalRequest, action: str,
-                              feedback: list[str] | None) -> tuple[dict[str, str], float]:
-        """Stub: in production this dispatches to the configured audit endpoint.
+                              feedback: list[str] | None) -> tuple[dict[str, str], float, str | None]:
+        try:
+            answers, cost = await self.audit_executor.ask(
+                req=req,
+                action=action,
+                feedback=feedback,
+                questions=FIVE_QUESTIONS,
+            )
+            return answers, cost, None
+        except Exception as exc:  # noqa: BLE001
+            log.warning("gary.audit_executor_error", error=str(exc))
+            answers = {q: "" for q in ("Q1", "Q2", "Q3", "Q4", "Q5")}
+            reason = f"{exc.__class__.__name__}:{str(exc)[:120]}"
+            return answers, 0.0, reason
 
-        For v1.0 shipping, this stub returns empty answers which will fail
-        validation, triggering escalation. Users must wire a real audit
-        executor; see docs/guides/configuration.md §Gary.
-        """
-        answers = {q: "" for q in ("Q1", "Q2", "Q3", "Q4", "Q5")}
-        # 0 cost when stubbed
-        return answers, 0.0
+    def _build_executor(self) -> AuditExecutor:
+        base_url = getattr(self.config, "audit_http_base_url", None)
+        if not base_url:
+            log.info("gary.audit_executor_stub_enabled", reason="audit_http_base_url_not_configured")
+            return StubAuditExecutor()
+
+        primary = _AuditEndpoint(
+            base_url=str(base_url),
+            model=str(getattr(self.config, "audit_http_model", "gpt-4o-mini")),
+            api_key_env_var=getattr(self.config, "audit_http_api_key_env_var", None),
+            timeout_seconds=int(getattr(self.config, "audit_timeout_seconds", 20)),
+            max_retries=int(getattr(self.config, "audit_max_retries", 1)),
+            temperature=float(getattr(self.config, "audit_temperature", 0.0)),
+            input_per_million_usd=float(getattr(self.config, "audit_input_per_million_usd", 0.0)),
+            output_per_million_usd=float(getattr(self.config, "audit_output_per_million_usd", 0.0)),
+        )
+
+        fallback_model = getattr(self.config, "fallback_audit_http_model", None)
+        fallback_base = getattr(self.config, "fallback_audit_http_base_url", None)
+        fallback: _AuditEndpoint | None = None
+        if fallback_model:
+            fallback = _AuditEndpoint(
+                base_url=str(fallback_base or base_url),
+                model=str(fallback_model),
+                api_key_env_var=(
+                    getattr(self.config, "fallback_audit_http_api_key_env_var", None)
+                    or getattr(self.config, "audit_http_api_key_env_var", None)
+                ),
+                timeout_seconds=int(getattr(self.config, "audit_timeout_seconds", 20)),
+                max_retries=int(getattr(self.config, "audit_max_retries", 1)),
+                temperature=float(getattr(self.config, "audit_temperature", 0.0)),
+                input_per_million_usd=float(getattr(self.config, "audit_input_per_million_usd", 0.0)),
+                output_per_million_usd=float(getattr(self.config, "audit_output_per_million_usd", 0.0)),
+            )
+        return HttpAuditExecutor(primary=primary, fallback=fallback)
 
     def _summarize_action(self, req: CanonicalRequest) -> str:
         for m in reversed(req.messages):

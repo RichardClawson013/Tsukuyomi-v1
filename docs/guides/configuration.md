@@ -126,6 +126,32 @@ Disabling an organ via `"enabled": false` skips it in the pipeline. Disabling Sk
 }
 ```
 
+### 6.1 Gary audit HTTP executor fields
+
+When `protocols.gary.audit_http_base_url` is set, Gary uses a real HTTP audit model
+instead of the deterministic stub.
+
+```json
+"protocols": {
+  "gary": {
+    "audit_http_base_url": "https://api.openai.com/v1",
+    "audit_http_api_key_env_var": "OPENAI_API_KEY",
+    "audit_http_model": "gpt-4o-mini",
+    "audit_timeout_seconds": 20,
+    "audit_max_retries": 1,
+    "audit_temperature": 0.0,
+    "audit_input_per_million_usd": 0.15,
+    "audit_output_per_million_usd": 0.60,
+    "fallback_audit_http_base_url": "https://openrouter.ai/api/v1",
+    "fallback_audit_http_api_key_env_var": "OPENROUTER_API_KEY",
+    "fallback_audit_http_model": "anthropic/claude-3.5-haiku"
+  }
+}
+```
+
+If `audit_http_base_url` is omitted/null, Gary stays in safe stub mode and escalates on
+validation failure.
+
 ## 7. Memory section
 
 ```json

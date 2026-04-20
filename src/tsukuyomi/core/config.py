@@ -144,6 +144,17 @@ class GaryConfig(BaseModel):
     escalate_to_mouth_on_final_fail: bool = True
     audit_log_dir: str = "data/audits"
     max_cost_per_audit_usd: float = 0.10
+    audit_http_base_url: str | None = None
+    audit_http_api_key_env_var: str | None = None
+    audit_http_model: str = "gpt-4o-mini"
+    audit_timeout_seconds: int = 20
+    audit_max_retries: int = 1
+    audit_temperature: float = 0.0
+    audit_input_per_million_usd: float = 0.0
+    audit_output_per_million_usd: float = 0.0
+    fallback_audit_http_base_url: str | None = None
+    fallback_audit_http_api_key_env_var: str | None = None
+    fallback_audit_http_model: str | None = None
     primary_audit_endpoint: str = "same_as_request"
     fallback_audit_endpoint: str = "openrouter/anthropic/claude-haiku-4.6"
 
