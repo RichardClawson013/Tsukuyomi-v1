@@ -30,7 +30,7 @@ This Code of Conduct applies within all project spaces, and also applies when an
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at `rob@tsukuyomi.dev`. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at `umakemedo@proton.me`. All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 
