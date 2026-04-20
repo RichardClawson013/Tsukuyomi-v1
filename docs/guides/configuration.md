@@ -117,6 +117,31 @@ Each organ has its own object. Common fields:
 
 Disabling an organ via `"enabled": false` skips it in the pipeline. Disabling Skin or Knee is **not recommended**; Tsukuyomi will emit a startup warning.
 
+### 5.1 Shoulders (GitNexus MCP) fields
+
+`organs.shoulders` controls blast-radius lookups through GitNexus MCP.
+
+```json
+"organs": {
+  "shoulders": {
+    "enabled": true,
+    "mcp_command": ["npx", "-y", "gitnexus@latest", "mcp"],
+    "mcp_startup_timeout_seconds": 20,
+    "thresholds": {
+      "low_max_callers": 0,
+      "medium_max_callers": 5,
+      "high_max_callers": 15
+    },
+    "unknown_treated_as": "HIGH"
+  }
+}
+```
+
+- `mcp_command`: command used to start the MCP server over stdio.
+- `mcp_startup_timeout_seconds`: startup + call timeout budget for MCP JSON-RPC.
+- `thresholds`: maps direct-caller counts to LOW/MEDIUM/HIGH/CRITICAL.
+- `unknown_treated_as`: fallback risk when MCP is unavailable or parsing fails.
+
 ## 6. Protocols section
 
 ```json
