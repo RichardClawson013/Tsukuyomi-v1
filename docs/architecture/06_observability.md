@@ -112,7 +112,10 @@ In parallel to file logging, every record is upserted into the `events` table of
 
 ### 3.1 Format
 
-OpenMetrics / Prometheus-compatible text format, exposed at `GET /metrics` (port and path configurable; not enabled by default).
+OpenMetrics / Prometheus-compatible text format, exposed by the interceptor
+when `observability.metrics_enabled=true`. The route path is
+`observability.metrics_path` (default `/metrics`) on the same host/port as
+the interceptor.
 
 ### 3.2 The metric set (v1.0)
 

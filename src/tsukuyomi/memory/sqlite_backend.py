@@ -54,8 +54,9 @@ class SQLiteMemoryBackend:
                 req.model_used,
                 None,                              # upstream filled in by interceptor.forward
                 req.tier.value if req.tier else None,
-                None, None,                        # token counts filled in post-call
-                None,                              # cost
+                req.tokens_in,
+                req.tokens_out,
+                req.cost_usd,
                 None,                              # latency
                 req.final_decision.value if req.final_decision else None,
                 req.block_reason,

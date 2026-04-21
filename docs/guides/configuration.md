@@ -117,6 +117,54 @@ Each organ has its own object. Common fields:
 
 Disabling an organ via `"enabled": false` skips it in the pipeline. Disabling Skin or Knee is **not recommended**; Tsukuyomi will emit a startup warning.
 
+### 5.1 Shoulders (GitNexus MCP) fields
+
+`organs.shoulders` controls blast-radius lookups through GitNexus MCP.
+
+```json
+"organs": {
+  "shoulders": {
+    "enabled": true,
+    "mcp_command": ["npx", "-y", "gitnexus@latest", "mcp"],
+    "mcp_startup_timeout_seconds": 20,
+    "thresholds": {
+      "low_max_callers": 0,
+      "medium_max_callers": 5,
+      "high_max_callers": 15
+    },
+    "unknown_treated_as": "HIGH"
+  }
+}
+```
+
+- `mcp_command`: command used to start the MCP server over stdio.
+- `mcp_startup_timeout_seconds`: startup + call timeout budget for MCP JSON-RPC.
+- `thresholds`: maps direct-caller counts to LOW/MEDIUM/HIGH/CRITICAL.
+- `unknown_treated_as`: fallback risk when MCP is unavailable or parsing fails.
+
+### 5.2 Mouth webhook fields
+
+`organs.mouth` supports `interface: "webhook"` for production approvals.
+
+```json
+"organs": {
+  "mouth": {
+    "interface": "webhook",
+    "timeout_seconds": 120,
+    "default_on_timeout": "deny",
+    "webhook_url": "https://approvals.example.com/tsukuyomi/mouth",
+    "webhook_secret_env_var": "TSUKUYOMI_MOUTH_WEBHOOK_SECRET",
+    "webhook_max_skew_seconds": 300,
+    "webhook_replay_window_seconds": 600
+  }
+}
+```
+
+- `webhook_url`: URL that receives approval requests via POST.
+- `webhook_secret_env_var`: secret env var used for HMAC request signing.
+- `webhook_max_skew_seconds`: allowed timestamp drift when verifying callback signature.
+- `webhook_replay_window_seconds`: nonce replay-protection window for callback signatures.
+
 ## 6. Protocols section
 
 ```json
@@ -125,6 +173,32 @@ Disabling an organ via `"enabled": false` skips it in the pipeline. Disabling Sk
   "nightshift": { ... per docs/architecture/04_protocols.md §5.2 }
 }
 ```
+
+### 6.1 Gary audit HTTP executor fields
+
+When `protocols.gary.audit_http_base_url` is set, Gary uses a real HTTP audit model
+instead of the deterministic stub.
+
+```json
+"protocols": {
+  "gary": {
+    "audit_http_base_url": "https://api.openai.com/v1",
+    "audit_http_api_key_env_var": "OPENAI_API_KEY",
+    "audit_http_model": "gpt-4o-mini",
+    "audit_timeout_seconds": 20,
+    "audit_max_retries": 1,
+    "audit_temperature": 0.0,
+    "audit_input_per_million_usd": 0.15,
+    "audit_output_per_million_usd": 0.60,
+    "fallback_audit_http_base_url": "https://openrouter.ai/api/v1",
+    "fallback_audit_http_api_key_env_var": "OPENROUTER_API_KEY",
+    "fallback_audit_http_model": "anthropic/claude-3.5-haiku"
+  }
+}
+```
+
+If `audit_http_base_url` is omitted/null, Gary stays in safe stub mode and escalates on
+validation failure.
 
 ## 7. Memory section
 

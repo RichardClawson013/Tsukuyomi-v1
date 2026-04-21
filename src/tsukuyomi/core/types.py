@@ -125,6 +125,9 @@ class CanonicalRequest:
     sandbox_result: Optional[SandboxResult] = None
     toe_zone: Optional[BudgetZone] = None
     model_used: Optional[str] = None              # may differ from requested due to Toe downgrade
+    tokens_in: Optional[int] = None
+    tokens_out: Optional[int] = None
+    cost_usd: Optional[float] = None
     final_decision: Optional[Decision] = None
     block_reason: Optional[str] = None
 

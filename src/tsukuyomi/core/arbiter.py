@@ -97,6 +97,50 @@ class Arbiter:
 
         if req.tier and req.tier.value == 3 and req.has_file_writes:
             await self.sandbox.simulate(req)
+            if req.sandbox_result and not req.sandbox_result.passed:
+                approved = await self.mouth.request_approval(
+                    title="Sandbox mismatch",
+                    details=(
+                        f"Sandbox plan mismatch score={req.sandbox_result.match_score:.3f} "
+                        f"(threshold 0.90)"
+                    ),
+                    proposed_action=req.messages[-1].content[:200],
+                    triggering_organ="sandbox",
+                )
+                if not approved:
+                    req.final_decision = Decision.BLOCK
+                    req.block_reason = "sandbox_mismatch_denied"
+                    await self.memory.write_request(req)
+                    return req
+
+            if req.sandbox_result:
+                verification = await self.eyes.verify_expected_vs_actual(
+                    expected_files=req.sandbox_result.expected_files,
+                    actual_files=req.sandbox_result.actual_files,
+                )
+                if not verification.match:
+                    approved = await self.mouth.request_approval(
+                        title="Post-action mismatch (Eyes)",
+                        details=(
+                            f"surprise={verification.surprise_files}, "
+                            f"missing={verification.missing_files}"
+                        ),
+                        proposed_action=req.messages[-1].content[:200],
+                        triggering_organ="eyes",
+                    )
+                    if not approved:
+                        req.final_decision = Decision.BLOCK
+                        req.block_reason = "eyes_mismatch_denied"
+                        await self.memory.write_request(req)
+                        return req
+                    if (
+                        self.config.organs.eyes.block_on_repeated_mismatch
+                        and self.eyes.session_mismatches >= self.config.organs.eyes.mismatch_threshold_per_session
+                    ):
+                        req.final_decision = Decision.BLOCK
+                        req.block_reason = "eyes_repeated_mismatch_threshold"
+                        await self.memory.write_request(req)
+                        return req
 
         knee_verdict = self.knee.check(req)
         if not knee_verdict.permitted:

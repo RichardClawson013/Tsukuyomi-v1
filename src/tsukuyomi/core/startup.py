@@ -64,6 +64,7 @@ async def start(config_path: Optional[str | Path] = None) -> None:
     try:
         await server.serve_forever()
     finally:
+        await shoulders.shutdown()
         await memory.shutdown()
         await nerve.shutdown()
         log.info("stopped")
