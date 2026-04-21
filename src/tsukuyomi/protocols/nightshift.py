@@ -75,16 +75,169 @@ async def _heuristic_frequently_blocked(memory, since, config) -> list[dict[str,
 
 
 async def _heuristic_audit_evasion(memory, since, config) -> list[dict[str, Any]]:
-    # Stub — queries audits table for round-1-fail-round-2-pass patterns.
-    return []
+    rows = await _query_db(
+        memory,
+        """SELECT rounds_json FROM audits WHERE ts_utc >= ?""",
+        (since.isoformat(),),
+    )
+    phrase_counts: dict[str, int] = {}
+    total_two_round_passes = 0
+
+    for row in rows:
+        rounds_raw = row.get("rounds_json")
+        if not isinstance(rounds_raw, str):
+            continue
+        try:
+            rounds = json.loads(rounds_raw)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(rounds, list) or len(rounds) < 2:
+            continue
+        r1 = rounds[0] if isinstance(rounds[0], dict) else {}
+        r2 = rounds[1] if isinstance(rounds[1], dict) else {}
+        if bool(r1.get("approved")):
+            continue
+        if not bool(r2.get("approved")):
+            continue
+        total_two_round_passes += 1
+        for reason in r1.get("reasons", []):
+            if isinstance(reason, str) and reason.startswith("evasion_phrase:"):
+                phrase = reason.split(":", 1)[1].strip()
+                if phrase:
+                    phrase_counts[phrase] = phrase_counts.get(phrase, 0) + 1
+
+    proposals = []
+    for phrase, count in sorted(phrase_counts.items(), key=lambda x: x[1], reverse=True):
+        if count < 2:
+            continue
+        proposals.append({
+            "slug": f"audit_evasion_{_slugify(phrase)}",
+            "heuristic": "audit_evasion_patterns",
+            "title": f"Review Gary evasion phrase handling: '{phrase}'",
+            "observation": (
+                f"Evasion phrase `{phrase}` appeared {count} times in round-1 failed audits "
+                f"that subsequently passed round 2."
+            ),
+            "recommendation": (
+                "Review whether this phrase should remain in the evasion list or if prompts/"
+                "feedback need tuning to reduce repeated round-1 failures."
+            ),
+            "evidence_count": count,
+            "metadata": {"two_round_passes": total_two_round_passes},
+        })
+    return proposals
 
 
 async def _heuristic_skin_drift(memory, since, config) -> list[dict[str, Any]]:
-    return []
+    rows = await _query_db(
+        memory,
+        """
+        SELECT tier, final_decision, block_reason, COUNT(*) AS n
+        FROM requests
+        WHERE ts_start_utc >= ?
+        GROUP BY tier, final_decision, block_reason
+        """,
+        (since.isoformat(),),
+    )
+    tier1_total = 0
+    tier1_risky = 0
+    for row in rows:
+        tier = row.get("tier")
+        if tier != 1:
+            continue
+        n = int(row.get("n") or 0)
+        tier1_total += n
+        decision = str(row.get("final_decision") or "")
+        reason = str(row.get("block_reason") or "")
+        if decision == "block" and (
+            reason.startswith("knee:")
+            or reason.startswith("gary_")
+            or reason.startswith("sandbox_")
+            or reason.startswith("eyes_")
+        ):
+            tier1_risky += n
+
+    if tier1_total == 0:
+        return []
+    ratio = tier1_risky / tier1_total
+    if ratio < 0.10:
+        return []
+
+    return [{
+        "slug": "skin_drift_tier1_risky_outcomes",
+        "heuristic": "skin_classification_drift",
+        "title": "Investigate Skin tier-1 drift toward risky outcomes",
+        "observation": (
+            f"{tier1_risky}/{tier1_total} tier-1 requests ({ratio:.1%}) ended in high-risk style "
+            "blocks (knee/gary/sandbox/eyes indicators)."
+        ),
+        "recommendation": (
+            "Review skin rules and default tier behavior. Consider promoting ambiguous tier-1-like "
+            "prompts to tier 2 for stricter downstream checks."
+        ),
+        "evidence_count": tier1_risky,
+    }]
 
 
 async def _heuristic_budget_calibration(memory, since, config) -> list[dict[str, Any]]:
-    return []
+    rows = await _query_db(
+        memory,
+        """
+        SELECT final_decision, block_reason, cost_usd
+        FROM requests
+        WHERE ts_start_utc >= ?
+        """,
+        (since.isoformat(),),
+    )
+    total = len(rows)
+    if total == 0:
+        return []
+
+    toe_red_blocks = 0
+    expensive = 0
+    spend = 0.0
+    for row in rows:
+        spend += float(row.get("cost_usd") or 0.0)
+        if str(row.get("block_reason") or "") == "toe_red_denied":
+            toe_red_blocks += 1
+        if float(row.get("cost_usd") or 0.0) >= 0.10:
+            expensive += 1
+
+    red_ratio = toe_red_blocks / total
+    expensive_ratio = expensive / total
+
+    proposals: list[dict[str, Any]] = []
+    if red_ratio >= 0.10:
+        proposals.append({
+            "slug": "budget_calibration_tight_red_hits",
+            "heuristic": "budget_calibration",
+            "title": "Budget frequently hits RED zone",
+            "observation": (
+                f"Toe RED denials occurred {toe_red_blocks}/{total} requests ({red_ratio:.1%}) in "
+                "the lookback window."
+            ),
+            "recommendation": (
+                "Review daily budget and warning threshold values. Consider a slightly higher daily "
+                "budget or earlier downgrade mapping to reduce hard-stop frequency."
+            ),
+            "evidence_count": toe_red_blocks,
+            "metadata": {"total_spend_usd": round(spend, 4)},
+        })
+    elif expensive_ratio >= 0.30:
+        proposals.append({
+            "slug": "budget_calibration_high_cost_density",
+            "heuristic": "budget_calibration",
+            "title": "High density of expensive requests",
+            "observation": (
+                f"{expensive}/{total} requests ({expensive_ratio:.1%}) cost >= $0.10 each."
+            ),
+            "recommendation": (
+                "Tune Toe downgrade_map so expensive models downgrade earlier in AMBER zone."
+            ),
+            "evidence_count": expensive,
+            "metadata": {"total_spend_usd": round(spend, 4)},
+        })
+    return proposals
 
 
 async def _heuristic_nose_threshold(memory, since, config) -> list[dict[str, Any]]:
@@ -136,6 +289,23 @@ def _render_proposal(prop: dict[str, Any]) -> str:
 
 *NightShift never auto-applies. See docs/architecture/04_protocols.md §5.2.*
 """
+
+
+def _slugify(value: str) -> str:
+    out = "".join(ch.lower() if ch.isalnum() else "_" for ch in value).strip("_")
+    while "__" in out:
+        out = out.replace("__", "_")
+    return out or "item"
+
+
+async def _query_db(memory: SQLiteMemoryBackend, sql: str,
+                    params: tuple[Any, ...]) -> list[dict[str, Any]]:
+    db = memory._db  # shared backend in same process; NightShift is read-only.
+    if db is None:
+        return []
+    async with db.execute(sql, params) as cur:
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, row)) async for row in cur]
 
 
 def main_cli() -> int:
