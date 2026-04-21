@@ -135,7 +135,7 @@ class Arbiter:
                         return req
                     if (
                         self.config.organs.eyes.block_on_repeated_mismatch
-                        and self.eyes.session_mismatches > self.config.organs.eyes.mismatch_threshold_per_session
+                        and self.eyes.session_mismatches >= self.config.organs.eyes.mismatch_threshold_per_session
                     ):
                         req.final_decision = Decision.BLOCK
                         req.block_reason = "eyes_repeated_mismatch_threshold"
