@@ -1,37 +1,34 @@
 # Code of Conduct
 
-## Our Pledge
+Small project, one person running it. No committee, no process, no capacity to mediate anything complicated. Here's what I can actually say.
 
-We pledge to make participation in the Tsukuyomi project a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
+## The basic ask
 
-## Our Standards
+Argue with the work. Be as blunt as you want about the ideas. Tell me I'm wrong. Point out what doesn't work. Question the design choices. That's the whole reason the repo is public.
 
-Examples of behavior that contributes to a positive environment:
-- Using welcoming and inclusive language.
-- Being respectful of differing viewpoints and experiences.
-- Gracefully accepting constructive criticism.
-- Focusing on what is best for the community.
-- Showing empathy towards other community members.
+Be decent to the people around you while you're doing it. Attack arguments, not people. No harassment. No slurs. Don't make anyone feel unsafe for being who they are.
 
-Examples of unacceptable behavior:
-- The use of sexualized language or imagery and unwelcome sexual attention or advances.
-- Trolling, insulting/derogatory comments, and personal or political attacks.
-- Public or private harassment.
-- Publishing others' private information without explicit permission.
-- Other conduct which could reasonably be considered inappropriate in a professional setting.
+## If something goes wrong
 
-## Our Responsibilities
+If someone's being harmful in an issue, pull request, or anywhere else connected to this project, I'll deal with it. Delete comments, block accounts, ask people to back off — whatever fits the situation.
 
-Project maintainers are responsible for clarifying the standards of acceptable behavior and are expected to take appropriate and fair corrective action in response to any instances of unacceptable behavior.
+I'm not trained in community moderation. I'll get some of it wrong. If I do, email me and tell me.
 
-## Scope
+## My own tone
 
-This Code of Conduct applies within all project spaces, and also applies when an individual is representing the project or its community in public spaces.
+I swear sometimes. I get blunt. If something I wrote crosses a line, tell me.
 
-## Enforcement
+## Where this applies
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at `rob@tsukuyomi.dev`. All complaints will be reviewed and investigated promptly and fairly.
+The repo. Issues. Pull requests. Anywhere I'm representing the project. Not people's behavior on the rest of the internet — can't police that, won't try.
 
-## Attribution
+## Reaching me about any of this
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.
+- rob@droogdoc.info
+- umakemedo@proton.me
+
+---
+
+Short version: honest about the work, decent to the people, tell me if I'm being unfair.
+
+rob@droogdoc.info · umakemedo@proton.me

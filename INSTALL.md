@@ -1,171 +1,125 @@
-# Hoe je dit pakket gebruikt — in stappen
+# Install
 
-Dit pakket is **Tsukuyomi v1.0** — release-klaar, alles erin. Hieronder staat wat je nu, morgen, en daarna doet.
+How to get this running on your machine.
 
----
+## What you need
 
-## STAP 0 — wat je hebt
+- Python 3.11 or newer.
+- Git.
+- A terminal you can paste commands into. I built and tested this on Windows with WSL2 (Ubuntu). It probably works on Linux and macOS the same way. I don't know about plain Windows without WSL — I haven't tried.
+- Disk space: small, well under 100 MB.
 
-Een map `tsukuyomi-v1.0/` met **111 bestanden**. Complete open-source release onder jouw naam, Apache-2.0. Alles draait om één idee:
-
-> **De agent configureert `ANTHROPIC_BASE_URL=http://localhost:9999` — en daarmee is Tsukuyomi onontkoombaar tussen agent en model.**
-
-Geen hooks. Geen wrapping. Geen samenwerking van de agent vereist. Dwang via netwerkpad.
-
----
-
-## STAP 1 — pak het uit, zet het in je projectmap
+## Get the code
 
 ```bash
-# In WSL2:
-cd /mnt/c/Users/User/
-cp -r /pad/naar/tsukuyomi-v1.0 ./tsukuyomi
-cd tsukuyomi
-git init
-git add .
-git commit -m "initial: Tsukuyomi v1.0 open-source release"
+git clone https://github.com/RichardClawson013/Tsukuyomi.git
+cd Tsukuyomi
 ```
 
-Je hebt nu een git-repo. Dit is je publicatie-basis.
-
----
-
-## STAP 2 — lokaal installeren en tests draaien
+## Set up a Python environment
 
 ```bash
-cd /mnt/c/Users/User/tsukuyomi
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+source .venv/bin/activate    # Linux / macOS / WSL
+# or on Windows:  .venv\Scripts\activate
+```
 
-# Draai alle tests — moet 31/31 geslaagd tonen:
+## Install the package and its dev dependencies
+
+```bash
+pip install -e ".[dev]"
+```
+
+If this fails, the most common cause is having a Python older than 3.11. Check with `python3 --version`.
+
+## Run the tests
+
+```bash
 pytest
 ```
 
-Als alle 31 tests slagen (wat hier al bewezen is), is de basis werkend.
+You should see something like `31 passed`. If a test fails on your machine but passes on mine, open an issue and tell me what failed and what your environment is.
 
----
-
-## STAP 3 — inspecteer de documentatie
-
-Lees in deze volgorde:
-
-1. **`README.md`** — voor jezelf en voor iedereen die het project vindt
-2. **`docs/research/PAPER.md`** — de onderbouwing, MIT/Stanford-niveau, 47 referenties
-3. **`docs/architecture/01_overview.md`** t/m `06_observability.md` — de techniek
-4. **`docs/adr/`** — alle 8 beslissingen expliciet onderbouwd (dit is wat MIT/Stanford eist)
-5. **`docs/guides/installation.md`** — hoe iemand anders het zou installeren
-
----
-
-## STAP 4 — publiceren op GitHub
+## Try starting it
 
 ```bash
-# Maak een lege GitHub repo aan op https://github.com/new genaamd 'tsukuyomi'
-# Dan:
-git remote add origin https://github.com/robdevet/tsukuyomi.git
-git branch -M main
-git push -u origin main
-```
-
-Na push:
-- GitHub toont README.md als landing page
-- CI draait automatisch via `.github/workflows/ci.yml`
-- `CITATION.cff` laat GitHub automatisch citatie-knoppen tonen
-- `LICENSE` wordt gedetecteerd als Apache-2.0
-
----
-
-## STAP 5 — wat gebeurt er als iemand dit gebruikt?
-
-De eerste gebruiker doet:
-```bash
-pip install tsukuyomi
 tsukuyomi init
 tsukuyomi start
+```
 
-# In een andere terminal:
+The `init` command creates a config directory with a default config file. The `start` command launches the proxy and it should print one line saying it is listening on port 9999.
+
+In another terminal, check it's alive:
+
+```bash
+curl http://localhost:9999/health
+```
+
+You should get `{"status":"ok","version":"1.0.0"}` back. If you don't, something went wrong starting it. Check the terminal where `tsukuyomi start` is running.
+
+## Point an agent at it
+
+If you use Claude Code:
+
+```bash
 export ANTHROPIC_BASE_URL=http://localhost:9999
-claude-code "refactor the auth module"
+claude-code "list the files here"
 ```
 
-Vanaf dat moment:
-- Elke request van Claude Code loopt door Tsukuyomi
-- Skin classificeert risico
-- Shoulders checkt blast radius
-- Protocol Gary forceert 5-vragen audit bij Tier 3
-- Sandbox simuleert het plan
-- Knee blokkeert destructieve patronen
-- Toe bewaakt budget
-- Eyes verifieert bestandswijzigingen na actie
-- Nose detecteert loops
-- Mouth vraagt menselijke goedkeuring
-- Alles wordt gelogd in SQLite+FTS5 anatomic memory
-- NightShift draait 's nachts, analyseert logs, stelt verbeteringen voor
+Claude Code now talks to Tsukuyomi instead of directly to Anthropic. Tsukuyomi forwards the request to Anthropic if it passes the safety pipeline.
 
----
+For other agents, see `docs/guides/integrating_*.md`.
 
-## STAP 6 — wat je nog zelf moet inbouwen
+## You'll need API keys
 
-v1.0 is release-klaar als **framework**. Deze twee onderdelen moet jij (of een contributor) nog aanvullen voordat "echt" productioneel gebruik:
+Tsukuyomi forwards requests to whatever model provider you tell it to use. It doesn't have its own model. So you need an API key for whichever provider you're using.
 
-1. **Protocol Gary's audit-LLM executor** (`src/tsukuyomi/protocols/gary.py::_ask_audit_llm`)
-   — Nu een stub die lege antwoorden teruggeeft. Moet aangesloten op de geconfigureerde `fallback_audit_endpoint` (bijv. OpenRouter Haiku). Dit staat expliciet in `docs/architecture/04_protocols.md` en `docs/guides/configuration.md` — geen verborgen werk.
-
-2. **GitNexus MCP-client** (`src/tsukuyomi/organs/shoulders.py::_query_gitnexus`)
-   — Nu een stub die `UNKNOWN` retourneert (wat conservatief behandeld wordt als HIGH). Moet een echte MCP JSON-RPC client worden.
-
-Beide zijn **gedocumenteerd als stubs** in ADR's en PAPER.md §7.2, dus wetenschappelijk eerlijk. Ze staan expliciet op de v1.1 roadmap.
-
----
-
-## STAP 7 — positionering
-
-Dit is wat je kunt zeggen tegen investeerders, academici, partners:
-
-> "Tsukuyomi is een open-source, Apache-2.0 interceptor die LLM-agenten architectonisch dwingt tot veilig gedrag. Het integreert subsumption (Brooks 1986), dual-process theorie (Kahneman 2011), cybernetica (Wiener 1948) en embodied world models (LeCun 2022) in een enkele deployment-laag. Agent-agnostisch: werkt voor Claude Code, Hermes, Cursor en elke OpenAI/Anthropic-compatibele agent via één environment variable."
-
-Commerciële pad (later, apart project):
-> "De commerciële variant is een Hermes-agent vooraf verpakt met Tsukuyomi, verkocht aan MKB die AI-autonomie wil zonder het risico."
-
----
-
-## Test-bewijs
-
-Op de machine waarop dit pakket gemaakt werd:
-
-```
-============================= test session starts ==============================
-collected 31 items
-
-tests/acceptance/test_acceptance_gates.py ..                             [  6%]
-tests/integration/test_pipeline_knee_block.py .                          [  9%]
-tests/integration/test_pipeline_tier1.py .                               [ 12%]
-tests/unit/test_canonical.py ...                                         [ 22%]
-tests/unit/test_config_loader.py ....                                    [ 35%]
-tests/unit/test_gary_validation.py ...                                   [ 45%]
-tests/unit/test_knee.py .......                                          [ 67%]
-tests/unit/test_nervecore.py ..                                          [ 74%]
-tests/unit/test_skin.py ....                                             [ 87%]
-tests/unit/test_toe.py ....                                              [100%]
-
-============================== 31 passed in 3.47s ==============================
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+# or
+export OPENAI_API_KEY=sk-...
 ```
 
+Set these in your shell before starting Tsukuyomi. **Do not put them in the config file.** They live in environment variables on purpose.
+
+## What's probably going to confuse you
+
+A few things worth knowing up front.
+
+- **Two parts of v1.0 are stubs.** Protocol Gary's audit-LLM caller and the GitNexus blast-radius client. They're documented as stubs in `docs/research/PAPER.md` section 7.2 and in the ADRs. If you wonder why the audit always trivially passes or why blast radius is always "UNKNOWN treated as HIGH-risk," it's because these pieces aren't wired yet. Not hidden, just not done.
+
+- **The Mouth defaults to "deny" on timeout.** This is on purpose. If you're testing in a script and the Mouth is waiting for human approval, it will time out and the request will fail. That's the safe default. You can adjust the timeout in `corelaw.json` if you need to.
+
+- **The sandbox needs a git-tracked project.** It uses `git worktree` to clone the repo for simulation. If you point Tsukuyomi at a project that isn't a git repo, the sandbox steps don't work and Tsukuyomi falls back to other safety checks.
+
+- **Logs go to a `data/` folder by default.** That folder is in `.gitignore` so don't commit it. If you want to see what Tsukuyomi is doing, look there.
+
+## If something goes wrong
+
+`docs/guides/troubleshooting.md` has the issues I've personally run into and how I solved them.
+
+If you hit something not in that doc, please open an issue or email me:
+
+- rob@droogdoc.info
+- umakemedo@proton.me
+
+Include the full error message, your Python version, and your OS. I can't promise I'll know how to fix it. At this point in the project my debugging toolkit is "put it in Cursor or Claude Code and see what they say." Beats silence.
+
+## Uninstalling
+
+```bash
+pip uninstall tsukuyomi
+rm -rf data/
+```
+
+That removes the package and the local data. If you want to also remove the config:
+
+```bash
+rm -rf ~/.local/share/tsukuyomi/
+```
+
+(Or the equivalent on your OS.)
+
 ---
 
-## Samenvatting — wat je in handen hebt
-
-- **Research-grade paper** (60+ pagina's, 47 referenties, MIT/Stanford-niveau)
-- **8 Architecture Decision Records** — elke keuze onderbouwd
-- **6 architectuurdocumenten** — complete systeemspec
-- **8 guides** — installatie, 4 agent-integraties, config, operations, troubleshooting
-- **7 Mermaid diagrammen** — visualisaties
-- **Complete werkende Python codebase** — 8 organen, 2 protocollen, reverse-proxy interceptor
-- **31 geslaagde tests** — unit + integration + acceptance
-- **5 runnable voorbeelden**
-- **Volledige CI/CD pipeline** — GitHub Actions
-- **Juridisch compleet** — Apache-2.0 LICENSE, CITATION.cff, CODE_OF_CONDUCT, SECURITY, CONTRIBUTING
-- **Je naam als auteur** — overal. README, CITATION, paper, LICENSE copyright.
-
-*Dit was de eis: MIT/Stanford-niveau open source onder je naam. Dit is het.*
+rob@droogdoc.info · umakemedo@proton.me

@@ -1,42 +1,39 @@
 cff-version: 1.2.0
-title: "Anatomic AI in Infinite Tsukuyomi"
-message: "If you use this software, please cite it as below."
+title: "Tsukuyomi"
+message: "If you use this work in academic or public writing, please cite it as below."
 type: software
 version: "1.0.0"
-date-released: "2026-04-20"
+date-released: "2026-04-21"
 license: Apache-2.0
-repository-code: "https://github.com/robdevet/tsukuyomi"
+repository-code: "https://github.com/RichardClawson013/Tsukuyomi"
 authors:
   - family-names: "de Vet"
     given-names: "Rob"
-    email: "rob@tsukuyomi.dev"
+    email: "rob@droogdoc.info"
+    affiliation: "Independent"
 abstract: >
-  A deterministic interceptor architecture that forces safety into any
-  LLM agent by operating as a reverse proxy at the HTTP boundary between
-  agent and model provider. Integrates subsumption architecture, dual-
-  process theory, cybernetics, and embodied world models into a single
-  coercive — rather than cooperative — safety layer.
+  A proxy that sits between an AI agent and its model API, tries to
+  prevent four common failure modes (hallucinated success, runaway
+  cost, blast-radius ignorance, malformed tool calls), and does so
+  by running requests through a pipeline of eight small "organs" and
+  two protocols before letting them reach the model. Built by one
+  non-programmer with the help of Claude. Released as Apache-2.0 in
+  the hope that people who can actually code will take it further.
 keywords:
   - "LLM agents"
   - "AI safety"
   - "guardrails"
-  - "interceptor architecture"
-  - "agentic AI"
+  - "reverse proxy"
   - "agent safety"
   - "sandbox simulation"
-references:
-  - type: article
-    authors:
-      - family-names: Brooks
-        given-names: Rodney A.
-    title: "A Robust Layered Control System for a Mobile Robot"
-    journal: "IEEE Journal of Robotics and Automation"
-    year: 1986
+  - "human in the loop"
 preferred-citation:
   type: software
-  title: "Anatomic AI in Infinite Tsukuyomi"
+  title: "Tsukuyomi"
   authors:
     - family-names: "de Vet"
       given-names: "Rob"
+      email: "rob@droogdoc.info"
   version: "1.0.0"
   year: 2026
+  url: "https://github.com/RichardClawson013/Tsukuyomi"
