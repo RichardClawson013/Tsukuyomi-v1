@@ -14,6 +14,7 @@ from tsukuyomi.organs.mouth import Mouth
 from tsukuyomi.organs.mouth_webhook import (
     NONCE_HEADER,
     SIG_HEADER,
+    SIG_PREFIX,
     TS_HEADER,
     MouthWebhookClient,
     ReplayGuard,
