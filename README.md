@@ -184,6 +184,7 @@ tsukuyomi/
 2. `docs/research/PAPER.md` (sections 1–3: problem, thesis, related work)
 3. `docs/architecture/01_overview.md`
 4. `examples/01_claude_code_safe_refactor/README.md` (runnable proof)
+5. `KNOWN_LIMITATIONS.md` (what is and is not guaranteed today)
 
 ### If you are integrating Tsukuyomi into your agent
 1. `docs/guides/installation.md`
@@ -195,6 +196,9 @@ tsukuyomi/
 1. `docs/guides/operations.md`
 2. `docs/guides/troubleshooting.md`
 3. `docs/architecture/06_observability.md`
+4. `KNOWN_LIMITATIONS.md`
+5. `docs/security/THREAT_MODEL.md`
+6. `docs/benchmarks/VALIDATION_SCENARIOS.md`
 
 ### If you are contributing to Tsukuyomi
 1. `CONTRIBUTING.md`
