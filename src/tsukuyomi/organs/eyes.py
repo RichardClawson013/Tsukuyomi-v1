@@ -34,9 +34,17 @@ class Eyes:
         if actual is None:
             # Non-git fallback: hash-based comparison is not feasible without a prior snapshot
             actual = []
+        return self._build_result(expected_files=expected_files, actual_files=actual)
 
+    async def verify_expected_vs_actual(self, expected_files: list[str],
+                                        actual_files: list[str]) -> VerificationResult:
+        """Verify a pre-computed expected vs actual file set."""
+        return self._build_result(expected_files=expected_files, actual_files=actual_files)
+
+    def _build_result(self, *, expected_files: list[str],
+                      actual_files: list[str]) -> VerificationResult:
         exp_set = set(expected_files)
-        act_set = set(actual)
+        act_set = set(actual_files)
         surprise = sorted(act_set - exp_set)
         missing = sorted(exp_set - act_set)
         match = not surprise and not missing
@@ -47,10 +55,10 @@ class Eyes:
         log.info("eyes.verify",
                  match_or_mismatch=("match" if match else "mismatch"),
                  expected_count=len(expected_files),
-                 actual_count=len(actual),
+                 actual_count=len(actual_files),
                  surprise_files_count=len(surprise))
         return VerificationResult(match=match, expected_files=expected_files,
-                                  actual_files=actual, surprise_files=surprise,
+                                  actual_files=actual_files, surprise_files=surprise,
                                   missing_files=missing)
 
     @property
