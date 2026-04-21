@@ -117,6 +117,8 @@
       "default_on_timeout": "deny",
       "webhook_url": null,
       "webhook_secret_env_var": "TSUKUYOMI_MOUTH_WEBHOOK_SECRET",
+      "webhook_max_skew_seconds": 300,
+      "webhook_replay_window_seconds": 600,
       "approval_triggers": {
         "blast_risk": ["HIGH", "CRITICAL"],
         "budget_percent": 80,

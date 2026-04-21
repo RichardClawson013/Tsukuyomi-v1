@@ -142,6 +142,29 @@ Disabling an organ via `"enabled": false` skips it in the pipeline. Disabling Sk
 - `thresholds`: maps direct-caller counts to LOW/MEDIUM/HIGH/CRITICAL.
 - `unknown_treated_as`: fallback risk when MCP is unavailable or parsing fails.
 
+### 5.2 Mouth webhook fields
+
+`organs.mouth` supports `interface: "webhook"` for production approvals.
+
+```json
+"organs": {
+  "mouth": {
+    "interface": "webhook",
+    "timeout_seconds": 120,
+    "default_on_timeout": "deny",
+    "webhook_url": "https://approvals.example.com/tsukuyomi/mouth",
+    "webhook_secret_env_var": "TSUKUYOMI_MOUTH_WEBHOOK_SECRET",
+    "webhook_max_skew_seconds": 300,
+    "webhook_replay_window_seconds": 600
+  }
+}
+```
+
+- `webhook_url`: URL that receives approval requests via POST.
+- `webhook_secret_env_var`: secret env var used for HMAC request signing.
+- `webhook_max_skew_seconds`: allowed timestamp drift when verifying callback signature.
+- `webhook_replay_window_seconds`: nonce replay-protection window for callback signatures.
+
 ## 6. Protocols section
 
 ```json

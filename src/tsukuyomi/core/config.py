@@ -111,6 +111,8 @@ class MouthConfig(OrganBaseConfig):
     default_on_timeout: str = "deny"
     webhook_url: str | None = None
     webhook_secret_env_var: str = "TSUKUYOMI_MOUTH_WEBHOOK_SECRET"
+    webhook_max_skew_seconds: int = 300
+    webhook_replay_window_seconds: int = 600
     approval_triggers: dict[str, Any] = Field(default_factory=dict)
 
 
