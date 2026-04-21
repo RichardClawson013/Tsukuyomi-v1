@@ -1,0 +1,86 @@
+name: Bug report
+description: Report a reproducible failure in Tsukuyomi.
+title: "[bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. Reproducible reports are the fastest way to get fixes merged.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What broke?
+      description: One short summary of the failure.
+      placeholder: "Example: Gary marked a destructive plan as safe."
+    validations:
+      required: true
+  - type: textarea
+    id: input_prompt
+    attributes:
+      label: Exact input/prompt
+      description: Paste the exact request that triggered the issue.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Repro steps
+      description: Numbered steps to reproduce the issue.
+      placeholder: |
+        1. Run ...
+        2. Send request ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / artifacts
+      description: Paste relevant logs, audit IDs, request IDs, and stack traces.
+      render: shell
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Commit / version
+      description: Git commit SHA or version tag.
+      placeholder: "Example: 62aa90b"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, and runtime details.
+      placeholder: "Ubuntu 24.04, Python 3.12, Docker 27"
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      description: How severe is this?
+      options:
+        - low
+        - medium
+        - high
+        - critical
+    validations:
+      required: true

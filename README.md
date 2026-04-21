@@ -62,12 +62,15 @@ I think there's something here. I'd like to find out if I'm right.
 
 - `MANIFESTO.md` — the longer story. Why I got obsessed with this. Why a kid's song. Why an anime. Why the sticky-note approach to agent safety doesn't work. Read this if you want to know what I was thinking, not just what I built.
 - `docs/research/PAPER.md` — the academic version of the argument. 90 sources. Subsumption architecture (Brooks 1986), dual-process theory (Kahneman 2011), cybernetics (Wiener 1948), world models (LeCun 2022) and a lot more. Claude and I assembled this together. I read the abstracts and the relevant sections, not all 90 papers cover-to-cover. If you spot a misreading, please tell me.
+- `ARCHITECTURE.md` — the quick map for builders (request path + where each component lives).
 - `docs/architecture/` — six documents on how the parts are supposed to fit together.
 - `docs/adr/` — eight Architecture Decision Records. Each one explains a design choice and the alternatives. If you disagree with a choice, the ADR is the place to start the argument.
 - `docs/guides/` — installation and integration notes for Claude Code, Cursor, Hermes, custom OpenAI SDK setups.
+- `docs/guides/LAUNCH_CHECKLIST.md` — pre-posting checklist so feedback converts into issues and PRs.
 - `src/tsukuyomi/` — the actual Python code.
 - `tests/` — 31 tests. Pass on my machine. Whether they test the right things, I can't fully judge.
 - `examples/` — five example setups.
+- `.github/ISSUE_TEMPLATE/bug_report.yml` — bug intake template with repro fields.
 - `STAPPENPLAN_OPERATOR.md` and `STAPPENPLAN_CLAUDE_CODE.md` — Dutch-language working notes for myself. Skip if you don't read Dutch.
 
 ## What's not finished
