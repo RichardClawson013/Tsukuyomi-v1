@@ -1,56 +1,44 @@
-# Known Limitations (Current State)
+# Known limitations (as of this branch)
 
-This file is intentionally explicit. Tsukuyomi is safer when users understand
-what it can and cannot guarantee today.
+Short version: this works, but it's not magic and it's not finished forever.
+This file exists so nobody has to guess what is and isn't true today.
 
-## 1) Hard guarantees (current)
+## What is true right now
 
-- Requests routed through Tsukuyomi are classified and gated by deterministic
-  controls (for example: Knee regex blocks, Gary validation rules).
-- High-risk flows can be escalated to human approval (Mouth).
-- Decision and audit artifacts are persisted for review.
+- The pipeline has deterministic gates (Knee regex, Gary validation, budget zones).
+- High-risk paths can escalate to a human decision (Mouth).
+- Decisions and audit trails are persisted.
+- Gary HTTP executor, Shoulders MCP path, webhook signing, and non-stream cost
+  accounting are wired on this branch.
 
-## 2) Non-guarantees (important)
+## What is still rough
 
-- **No universal prevention of all harmful actions.** Unknown patterns still
-  exist; safety is improved, not mathematically complete.
-- **No protection for traffic that bypasses the interceptor.** If an agent can
-  call upstream models directly, Tsukuyomi cannot enforce policy on that path.
-- **No guaranteed correctness of model reasoning.** Tsukuyomi governs allowed
-  behavior and checks, not intrinsic model truthfulness.
+- **Streaming accounting is weaker than non-stream accounting.**
+  Non-stream responses now feed Toe directly; stream usage still needs deeper handling.
+- **Webhook replay protection is process-local.**
+  Nonce memory lives in-process, so restarting resets the replay window.
+- **Shoulders quality depends on GitNexus health and index freshness.**
+  When external code-intelligence degrades, fallback risk goes conservative.
+- **NightShift proposals are heuristics, not ground truth.**
+  They are suggestions for humans to review, not auto-applied policy.
 
-## 3) Implementation limitations
+## What this project does NOT promise
 
-- **Streaming accounting is partial.** Token/cost accounting is currently
-  wired for non-streaming upstream responses.
-- **Shoulders precision depends on GitNexus availability/quality.** If MCP or
-  index quality degrades, fallback risk is applied conservatively.
-- **Mouth webhook is in-process and memory-backed.** Replay prevention is
-  process-local; restarting clears nonce memory.
-- **NightShift is heuristic.** Proposals are suggestions and can include
-  false positives; they must be reviewed by a human.
+- It does not make all harmful actions impossible.
+- It does not protect traffic that bypasses the interceptor path.
+- It does not make model reasoning "correct" by itself.
 
-## 4) Operational limitations
+## Non-goals
 
-- **Single-process assumptions.** Several safeguards (for example replay
-  windows and mismatch counters) are local to one process instance.
-- **Policy quality depends on configuration quality.** Unsafe thresholds or
-  permissive overrides can weaken protection.
-- **Cost control depends on provider usage metadata.** Missing usage fields
-  reduce accounting accuracy.
-
-## 5) Explicit non-goals
-
-- Replacing secure SDLC practices, code review, or change-management policy.
+- Replacing secure SDLC practices, code review, or change management.
 - Acting as a full endpoint security product.
-- Guaranteeing legal/compliance outcomes without organizational controls.
+- Guaranteeing compliance outcomes on its own.
 
-## 6) Reporting
+## If this limitation list is wrong
 
-If a limitation causes unsafe behavior, open an issue (or use `SECURITY.md`
-for vulnerability disclosure) with:
+Open an issue (or use `SECURITY.md` for sensitive reports) and include:
 
 - exact prompt/request,
-- observed decision path,
-- expected behavior,
-- relevant artifact references (audit id/log lines).
+- what happened,
+- what you expected,
+- artifact references (logs, audit id, request id).

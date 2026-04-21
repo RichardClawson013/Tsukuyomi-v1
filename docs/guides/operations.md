@@ -128,50 +128,31 @@ steps:
 
 This catches agent-induced regressions in CI before they hit a developer's machine.
 
-## 10. Public benchmark validation runner
+## 10. Public validation in one command
 
-Use the benchmark runner to generate a single artifact bundle reviewers can inspect:
+If you want one command that gives you "does this build still behave the way we
+claim," use:
 
 ```bash
 scripts/benchmark_validation_runner.sh
 ```
 
-With smoke included:
+That script wraps the acceptance checks and writes a small result bundle to a
+timestamped folder under `/tmp/` so you can hand it to someone else and say
+"here's what ran and what passed."
+
+If you also want API smoke checks included:
 
 ```bash
 scripts/benchmark_validation_runner.sh --with-smoke
 ```
 
-The runner writes:
+## 11. Acceptance gate (focused local gate)
 
-- `summary.txt`
-- `gate.log`
-- optional `smoke.log`
-- `metadata.json`
-
-to `WORK_DIR` (default: `/tmp/tsukuyomi-benchmark-<timestamp>`).
-
-## 10. Acceptance gate (one command)
-
-Use the acceptance gate script before public demos/releases:
+If you want just the engineering gate (without benchmark bundle extras), use:
 
 ```bash
 scripts/acceptance_gate.sh
 ```
 
-What it validates:
-- unit-test suite passes
-- smoke runtime checks pass (`scripts/smoke_test.sh`)
-- core artifact paths are present (`data/audits`, `data/proposals`)
-
-Common modes:
-
-```bash
-# Use existing running Tsukuyomi instance
-scripts/acceptance_gate.sh
-
-# Auto-start Tsukuyomi with explicit config
-AUTO_START=1 \
-SERVER_CMD='tsukuyomi start --config ~/.local/share/tsukuyomi/config/corelaw.json' \
-scripts/acceptance_gate.sh
-```
+Use this before demos or before you merge.

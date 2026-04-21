@@ -66,23 +66,18 @@ I think there's something here. I'd like to find out if I'm right.
 - `docs/adr/` — eight Architecture Decision Records. Each one explains a design choice and the alternatives. If you disagree with a choice, the ADR is the place to start the argument.
 - `docs/guides/` — installation and integration notes for Claude Code, Cursor, Hermes, custom OpenAI SDK setups.
 - `src/tsukuyomi/` — the actual Python code.
-- `tests/` — 62 tests at the time of writing. Pass on my machine. Whether they test the right things, I can't fully judge.
+- `tests/` — 31 tests. Pass on my machine. Whether they test the right things, I can't fully judge.
 - `examples/` — five example setups.
 - `STAPPENPLAN_OPERATOR.md` and `STAPPENPLAN_CLAUDE_CODE.md` — Dutch-language working notes for myself. Skip if you don't read Dutch.
 
-## What's still rough
+## What's not finished
 
-The two big stubs that were there earlier (Gary's audit executor and the
-Shoulders GitNexus MCP path) are now wired in this branch. So this section is
-not "missing pieces" anymore, it's "still rough edges":
+Two pieces ship as stubs in v1.0. Documenting them here so no one finds out by running into them.
 
-- **Streaming accounting is not as complete as non-stream accounting.**
-  Non-stream responses now feed Toe cost tracking directly. Stream paths still
-  need deeper usage instrumentation.
-- **Webhook replay protection is process-local.** Mouth webhook nonce memory is
-  in-process. Restarting Tsukuyomi resets that replay window.
-- **NightShift is heuristic by design.** It now generates useful proposals, but
-  proposals are suggestions, not truth. Human review remains required.
+- **Protocol Gary's audit-LLM caller.** The validation logic works (length checks, evasion phrases, risk vocabulary). The piece that calls a second model to actually answer the five audit questions is a stub. Someone needs to wire it to a real provider.
+- **The GitNexus MCP client.** The Shoulders code knows how to ask for blast-radius data and how to interpret the answer. The actual MCP-protocol client to talk to GitNexus isn't done. Falls back to "UNKNOWN", which the rest of the system treats as high-risk by default. Safe, but you're not getting real numbers yet.
+
+Both are documented as stubs in `docs/research/PAPER.md` section 7.2 and the relevant ADRs. They're the most obvious places someone with actual coding skills could help.
 
 ## What I can't promise
 

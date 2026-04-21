@@ -38,7 +38,7 @@ If this fails, the most common cause is having a Python older than 3.11. Check w
 pytest
 ```
 
-You should see something like `60+ passed` (the exact number can move as tests are added). If a test fails on your machine but passes on mine, open an issue and tell me what failed and what your environment is.
+You should see something like `31 passed`. If a test fails on your machine but passes on mine, open an issue and tell me what failed and what your environment is.
 
 ## Try starting it
 
@@ -86,7 +86,7 @@ Set these in your shell before starting Tsukuyomi. **Do not put them in the conf
 
 A few things worth knowing up front.
 
-- **Some fallback paths are still conservative by design.** If Gary HTTP audit endpoints are not configured, Gary uses safe escalation behavior. If GitNexus MCP is unavailable, Shoulders falls back to `unknown_treated_as` risk. That's intentional fail-safe behavior, not a silent bypass.
+- **Two parts of v1.0 are stubs.** Protocol Gary's audit-LLM caller and the GitNexus blast-radius client. They're documented as stubs in `docs/research/PAPER.md` section 7.2 and in the ADRs. If you wonder why the audit always trivially passes or why blast radius is always "UNKNOWN treated as HIGH-risk," it's because these pieces aren't wired yet. Not hidden, just not done.
 
 - **The Mouth defaults to "deny" on timeout.** This is on purpose. If you're testing in a script and the Mouth is waiting for human approval, it will time out and the request will fail. That's the safe default. You can adjust the timeout in `corelaw.json` if you need to.
 

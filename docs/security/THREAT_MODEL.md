@@ -1,112 +1,103 @@
-# Tsukuyomi Threat Model (v1.0 hardening baseline)
+# Threat model (plain version)
 
-This document defines what Tsukuyomi is designed to defend, what it currently
-does not defend, and where operational assumptions matter.
+If you only read one line, read this one:
 
-## 1) System boundary
+**Tsukuyomi lowers risk by forcing an agent through checks it can't bypass on
+that network path. It does not make all risk disappear.**
 
-Tsukuyomi is an API-layer interceptor between an agent and upstream LLM
-providers. Requests pass through:
+This file explains what we're defending, what assumptions that defense relies
+on, and what can still go wrong.
 
-- Interceptor (OpenAI/Anthropic wire compatibility)
-- Arbiter and organs/protocols
-- Upstream model providers
+## 1) What sits inside the boundary
 
-Primary protected assets:
+Tsukuyomi is the proxy between:
 
-- Filesystem and git repository integrity
-- Model provider credentials
-- Budget and cost controls
-- Audit/logging integrity
+- your agent, and
+- the model provider API.
 
-## 2) Adversary model
+So the protected surface is mostly:
 
-We assume adversaries may include:
+- repo/filesystem integrity,
+- provider credentials,
+- budget controls,
+- decision/audit trail integrity.
 
-- Prompt-level adversaries attempting to coerce destructive operations.
-- Misaligned or malfunctioning autonomous agent loops.
-- Operators with accidental unsafe configuration.
-- Network attackers who can tamper with approval callbacks.
+## 2) Who/what the threats are
 
-We do **not** assume root-level host compromise is preventable by Tsukuyomi.
+Not movie villains. Mostly this:
 
-## 3) Trust assumptions
+- bad prompts that pressure destructive actions,
+- agent loops that keep digging,
+- human misconfiguration,
+- webhook response tampering/replay.
 
-- Host OS and runtime are not already compromised.
-- Upstream model APIs are reachable and correctly authenticated.
-- Mouth webhook secret remains secret.
-- Optional external systems (e.g., GitNexus MCP) may fail; Tsukuyomi must fail
-  conservatively when they do.
+What this is **not** designed to solve:
 
-## 4) Key threats and controls
+- already-compromised host at root level.
 
-### 4.1 Destructive action execution
-Threat:
-- Agent attempts destructive commands or risky DB/SCM operations.
+## 3) Assumptions this whole thing depends on
 
-Controls:
-- Skin tiering + Knee deterministic blocklist.
-- Gary forced audit for high-risk paths.
-- Sandbox simulation and Eyes verification (for write-heavy/high-risk flows).
-- Mouth escalation for unresolved risk.
+- traffic actually goes through Tsukuyomi (no bypass side-path),
+- host/runtime is sane enough to trust,
+- webhook secret stays secret,
+- external dependencies (like GitNexus) can fail, and when they fail we fall
+  back conservatively.
 
-Residual risk:
-- Unknown destructive patterns not captured by deterministic rules.
+If those assumptions are false, safety degrades. Sometimes hard.
 
-### 4.2 Bypass of control plane
-Threat:
-- Agent routes around Tsukuyomi directly to provider.
+## 4) Threats and how Tsukuyomi answers them
 
-Controls:
-- Deployment architecture must force provider traffic through Tsukuyomi endpoint.
+### A) Destructive actions
 
-Residual risk:
-- Misconfiguration can reintroduce bypass paths.
+**Threat:** agent proposes dangerous commands/edits.
 
-### 4.3 Budget runaway
-Threat:
-- Looping agents consume excessive tokens/cost.
+**Controls:** Skin + Knee + Gary + sandbox + Eyes + Mouth escalation.
 
-Controls:
-- Toe zone management and downgrade map.
-- Post-response accounting from upstream usage payloads.
+**Residual risk:** unknown patterns and semantic edge cases always exist.
 
-Residual risk:
-- Streaming usage accounting is partial in v1.0; non-stream path is authoritative.
+### B) Control-plane bypass
 
-### 4.4 Approval channel tampering/replay
-Threat:
-- Forged webhook approval responses or replayed approvals.
+**Threat:** agent talks directly to provider.
 
-Controls:
-- HMAC signature verification.
-- Timestamp skew checks.
-- Nonce replay window enforcement.
+**Control:** deployment/network setup must force one path through Tsukuyomi.
 
-Residual risk:
-- In-memory replay window resets on process restart.
+**Residual risk:** config mistakes can reopen bypass.
 
-### 4.5 External dependency unavailability (GitNexus etc.)
-Threat:
-- Loss of external analysis causes blind spots.
+### C) Cost runaway
 
-Controls:
-- Shoulders fallback to conservative `unknown_treated_as` risk.
+**Threat:** loops burn tokens/budget.
 
-Residual risk:
-- Increased false positives / operator friction.
+**Control:** Toe zones + downgrade + usage accounting.
 
-## 5) Non-goals
+**Residual risk:** streaming accounting still less complete than non-stream.
 
-- Defending against a fully compromised host.
-- Guaranteeing zero false positives.
-- Guaranteeing perfect semantic understanding of user intent.
+### D) Approval spoof/replay
 
-## 6) Security-in-depth recommendations
+**Threat:** forged or replayed webhook approval response.
 
-- Run Tsukuyomi on a dedicated host/container boundary.
-- Restrict outbound network where possible.
-- Rotate webhook secrets regularly.
-- Keep Knee patterns and Gary phrase/risk vocab files reviewed.
-- Track known limitations in `KNOWN_LIMITATIONS.md`.
+**Control:** HMAC signature + timestamp skew checks + nonce replay guard.
+
+**Residual risk:** current replay memory is process-local (resets on restart).
+
+### E) External analysis unavailable
+
+**Threat:** GitNexus/other external source unavailable.
+
+**Control:** conservative fallback risk (`unknown_treated_as`).
+
+**Residual risk:** more false positives and more human friction.
+
+## 5) Non-goals (explicit)
+
+- Full defense against host compromise.
+- Zero false positives.
+- Perfect intent understanding.
+
+## 6) Practical hardening moves
+
+- run Tsukuyomi in a dedicated runtime boundary,
+- keep outbound network tight,
+- rotate webhook secrets,
+- periodically review Knee/Gary configs,
+- keep `KNOWN_LIMITATIONS.md` honest and up to date.
 
