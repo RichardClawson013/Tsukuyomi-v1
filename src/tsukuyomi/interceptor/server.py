@@ -179,7 +179,7 @@ class InterceptorServer:
         # Best-effort persistence for updated post-call accounting fields.
         try:
             loop = asyncio.get_running_loop()
-            loop.create_task(self.arbiter.memory.write_request(req))
+            self._last_write_task = loop.create_task(self.arbiter.memory.write_request(req))
         except RuntimeError:
             pass
 

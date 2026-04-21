@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from tsukuyomi.core.types import CanonicalRequest, Credential, Message
+from tsukuyomi.core.types import CanonicalRequest, Credential, Decision, Message
 from tsukuyomi.interceptor.server import InterceptorServer
 
 
@@ -53,6 +53,7 @@ def _req(model_requested: str = "gpt-4o-mini", model_used: str | None = None) ->
         stream=False,
         credential=Credential(raw_header="x", upstream_key="x", rewritten=False),
         model_used=model_used,
+        final_decision=Decision.PERMIT,
     )
 
 
