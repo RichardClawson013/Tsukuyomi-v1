@@ -29,8 +29,10 @@ curl http://localhost:9999/health
 
 ### Metrics (if enabled)
 ```bash
-curl http://localhost:9100/metrics | grep tsukuyomi_
+curl http://localhost:9999/metrics | rg tsukuyomi_
 ```
+
+If you changed `observability.metrics_path`, use that path instead.
 
 ### Live log
 ```bash

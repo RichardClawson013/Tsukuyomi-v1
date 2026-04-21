@@ -20,6 +20,7 @@ from tsukuyomi.interceptor.canonical import (
     anthropic_to_canonical, openai_to_canonical,
     canonical_to_anthropic, canonical_to_openai,
 )
+from tsukuyomi.observability.metrics import METRICS
 from tsukuyomi.observability.logging import get_logger
 
 log = get_logger(__name__)
@@ -42,6 +43,14 @@ class InterceptorServer:
         async def health():  # noqa: ANN201
             return {"status": "ok", "version": "1.0.0"}
 
+        if getattr(self.cfg, "metrics_enabled", False):
+            metrics_path = str(getattr(self.cfg, "metrics_path", "/metrics"))
+
+            @app.get(metrics_path)
+            async def metrics() -> Response:  # noqa: ANN201
+                payload, content_type = METRICS.export()
+                return Response(content=payload, media_type=content_type)
+
         @app.post("/v1/messages")
         async def anthropic_messages(request: Request) -> Response:
             body = await request.json()
@@ -55,6 +64,7 @@ class InterceptorServer:
             req = anthropic_to_canonical(body, raw_auth, upstream_key or raw_auth,
                                           agent_hint=request.headers.get("user-agent"))
             req = await self.arbiter.process(req)
+            self._record_request_metric(req, inbound_format="anthropic")
 
             if req.final_decision != Decision.PERMIT:
                 return JSONResponse(
@@ -77,6 +87,7 @@ class InterceptorServer:
             req = openai_to_canonical(body, raw_auth, upstream_key or raw_auth,
                                       agent_hint=request.headers.get("user-agent"))
             req = await self.arbiter.process(req)
+            self._record_request_metric(req, inbound_format="openai")
 
             if req.final_decision != Decision.PERMIT:
                 return JSONResponse(
@@ -193,6 +204,8 @@ class InterceptorServer:
             tokens_out=req.tokens_out,
             cost_usd=req.cost_usd,
         )
+        if METRICS.organ_decisions_total:
+            METRICS.organ_decisions_total.labels(organ="interceptor", decision="usage_recorded").inc()
 
     @staticmethod
     def _extract_usage_tokens(payload: dict[str, Any], *, wire_format: str) -> tuple[int | None, int | None]:
@@ -217,3 +230,16 @@ class InterceptorServer:
             )
         except (TypeError, ValueError):
             return None, None
+
+    @staticmethod
+    def _record_request_metric(req: CanonicalRequest, *, inbound_format: str) -> None:
+        if not METRICS.requests_total:
+            return
+        tier = str(req.tier.value) if req.tier else "unknown"
+        decision = req.final_decision.value if req.final_decision else "unknown"
+        METRICS.requests_total.labels(tier=tier, decision=decision).inc()
+        if METRICS.organ_decisions_total:
+            METRICS.organ_decisions_total.labels(
+                organ=f"interceptor_{inbound_format}",
+                decision=decision,
+            ).inc()
