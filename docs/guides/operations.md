@@ -128,6 +128,29 @@ steps:
 
 This catches agent-induced regressions in CI before they hit a developer's machine.
 
+## 10. Public benchmark validation runner
+
+Use the benchmark runner to generate a single artifact bundle reviewers can inspect:
+
+```bash
+scripts/benchmark_validation_runner.sh
+```
+
+With smoke included:
+
+```bash
+scripts/benchmark_validation_runner.sh --with-smoke
+```
+
+The runner writes:
+
+- `summary.txt`
+- `gate.log`
+- optional `smoke.log`
+- `metadata.json`
+
+to `WORK_DIR` (default: `/tmp/tsukuyomi-benchmark-<timestamp>`).
+
 ## 10. Acceptance gate (one command)
 
 Use the acceptance gate script before public demos/releases:

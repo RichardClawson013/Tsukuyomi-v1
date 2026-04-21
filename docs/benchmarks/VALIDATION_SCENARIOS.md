@@ -7,6 +7,25 @@ This document defines reproducible validation scenarios for Tsukuyomi claims.
 Provide a simple, repeatable way for external users to verify safety behavior
 without relying on internal team assumptions.
 
+## Fast path (single command)
+
+Use the benchmark runner to execute and summarize core scenarios:
+
+```bash
+scripts/benchmark_validation_runner.sh
+```
+
+Optional smoke with server auto-start:
+
+```bash
+scripts/benchmark_validation_runner.sh \
+  --with-smoke \
+  --auto-start-smoke \
+  --smoke-server-cmd "tsukuyomi start --config ~/.local/share/tsukuyomi/config/corelaw.json"
+```
+
+The script writes a timestamped summary under `/tmp/tsukuyomi-benchmark-*/summary.md`.
+
 ## Prerequisites
 
 - Tsukuyomi installed and runnable.
