@@ -127,3 +127,28 @@ steps:
 ```
 
 This catches agent-induced regressions in CI before they hit a developer's machine.
+
+## 10. Acceptance gate (one command)
+
+Use the acceptance gate script before public demos/releases:
+
+```bash
+scripts/acceptance_gate.sh
+```
+
+What it validates:
+- unit-test suite passes
+- smoke runtime checks pass (`scripts/smoke_test.sh`)
+- core artifact paths are present (`data/audits`, `data/proposals`)
+
+Common modes:
+
+```bash
+# Use existing running Tsukuyomi instance
+scripts/acceptance_gate.sh
+
+# Auto-start Tsukuyomi with explicit config
+AUTO_START=1 \
+SERVER_CMD='tsukuyomi start --config ~/.local/share/tsukuyomi/config/corelaw.json' \
+scripts/acceptance_gate.sh
+```
